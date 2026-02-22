@@ -3,9 +3,9 @@ name: Record Iftar (Muslim Vaanoli)
 on:
   workflow_dispatch:
   schedule:
-    # GitHub schedules use UTC.
-    # 16:45 UAE (UTC+4) = 12:45 UTC
-    - cron: "45 12 * * *"
+    # GitHub schedules use UTC
+    # 16:30 UAE (UTC+4) = 12:30 UTC
+    - cron: "30 12 * * *"
 
 permissions:
   contents: write
@@ -13,13 +13,19 @@ permissions:
 jobs:
   record-and-publish:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Record 20 minutes to MP3
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Record 45 minutes to MP3
         run: |
           mkdir -p public
           ffmpeg -hide_banner -loglevel error -y \
             -i "https://stream.muslimvanoli.com:1035/stream" \
-            -t 00:20:00 \
+            -t 00:45:00 \
             -vn \
             -acodec libmp3lame -b:a 128k \
             public/iftar_latest.mp3
@@ -29,16 +35,19 @@ jobs:
           cat > public/index.html << 'EOF'
           <!doctype html>
           <html>
-            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width,initial-scale=1">
+            </head>
             <body>
               <h3>Iftar Latest</h3>
               <audio controls src="iftar_latest.mp3"></audio>
-              <p>Direct file: <a href="iftar_latest.mp3">iftar_latest.mp3</a></p>
+              <p><a href="iftar_latest.mp3">Download latest file</a></p>
             </body>
           </html>
           EOF
 
-      - name: Publish to gh-pages (force, keep only latest)
+      - name: Publish to gh-pages (force keep only latest)
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
