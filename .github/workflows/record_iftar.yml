@@ -1,0 +1,65 @@
+name: Record Iftar (Muslim Vaanoli)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # GitHub schedules use UTC.
+    # 16:45 UAE (UTC+4) = 12:45 UTC
+    - cron: "45 12 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  record-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record 20 minutes to MP3
+        run: |
+          mkdir -p public
+          ffmpeg -hide_banner -loglevel error -y \
+            -i "https://stream.muslimvanoli.com:1035/stream" \
+            -t 00:20:00 \
+            -vn \
+            -acodec libmp3lame -b:a 128k \
+            public/iftar_latest.mp3
+
+      - name: Create simple index page
+        run: |
+          cat > public/index.html << 'EOF'
+          <!doctype html>
+          <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+            <body>
+              <h3>Iftar Latest</h3>
+              <audio controls src="iftar_latest.mp3"></audio>
+              <p>Direct file: <a href="iftar_latest.mp3">iftar_latest.mp3</a></p>
+            </body>
+          </html>
+          EOF
+
+      - name: Publish to gh-pages (force, keep only latest)
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          git clone --depth 1 --branch gh-pages "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" out || true
+
+          if [ -d "out/.git" ]; then
+            rm -rf out/*
+          else
+            rm -rf out
+            mkdir out
+            cd out
+            git init
+            git checkout -b gh-pages
+            cd ..
+          fi
+
+          cp -r public/* out/
+          cd out
+          git add .
+          git commit -m "Update iftar_latest" || true
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
