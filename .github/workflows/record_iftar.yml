@@ -5,7 +5,7 @@ on:
   schedule:
     # GitHub schedules use UTC
     # 16:30 UAE (UTC+4) = 12:30 UTC
-    - cron: "30 09 * * *"
+    - cron: "50 09 * * *"
 
 permissions:
   contents: write
