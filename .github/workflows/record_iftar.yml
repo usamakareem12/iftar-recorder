@@ -25,7 +25,7 @@ jobs:
           mkdir -p public
           ffmpeg -hide_banner -loglevel error -y \
             -i "https://stream.muslimvanoli.com:1035/stream" \
-            -t 00:45:00 \
+            -t 01:15:00 \
             -vn \
             -acodec libmp3lame -b:a 128k \
             public/iftar_latest.mp3
